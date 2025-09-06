@@ -9,6 +9,15 @@
 
 set -Eeuo pipefail
 
+# Optional notifications (email/Slack)
+# If present, this file should define notify() which accepts level and message
+if [[ -f /usr/local/lib/heritage_notify.sh ]]; then
+  # shellcheck disable=SC1091
+  source /usr/local/lib/heritage_notify.sh
+else
+  notify() { :; }
+fi
+
 # --------------- Config (EDIT AS NEEDED) ------------------
 BACKUP_SRC="/srv/heritage/data"           # Source data directory
 BACKUP_DEST="/var/backups/heritage"       # Local backup root
@@ -26,7 +35,7 @@ log() {
   local msg="$*"
   local ts
   ts="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-  echo "[$ts] [$level] $msg" | tee -a "$LOG_FILE" | logger -t heritage_automation -p "user.${level,,}" || true
+  echo "[$ts] [$level] $msg" | tee -a "$LOG_FILE" | logger -t heritage_automation -p "user.${level,,}" || true; notify "$level" "$msg"
 }
 
 require_root() {
